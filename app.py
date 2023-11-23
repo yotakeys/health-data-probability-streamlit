@@ -36,8 +36,14 @@ class App():
         with st.sidebar.form("data_form"):
 
             for attr in self.data_attributes:
-                if self.data[attr].dtype == 'int64' or self.data[attr].dtype == 'float64':
-                    self.data_form[attr] = st.number_input(attr)
+                if self.data[attr].dtype == 'int64':
+                    self.data_form[attr] = st.number_input(
+                        attr, value=0, step=1)
+
+                elif self.data[attr].dtype == 'float64':
+                    self.data_form[attr] = st.number_input(
+                        attr, value=0, step=0.01)
+
                 else:
                     self.data_form[attr] = st.selectbox(
                         attr, self.data[attr].unique())
