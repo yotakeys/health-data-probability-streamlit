@@ -2,6 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 from lifelines import KaplanMeierFitter
+from lifelines import NelsonAalenFitter
 import matplotlib.pyplot as plt
 
 
@@ -14,6 +15,7 @@ class App():
     submitted_form_data = False
     file_is_uploaded = False
     kmf = KaplanMeierFitter()
+    naaf = NelsonAalenFitter()
     data_key_columns = {
         "duration": None,
         "event_observed": None
@@ -31,6 +33,8 @@ class App():
             self.data_attributes = self.data.columns
             self.file_is_uploaded = True
 
+            self.show_data_dataframe()
+            self.get_data_key_column()
             # self.show_form()
 
         elif uploaded_file is not None and uploaded_file.name.endswith(".csv"):
@@ -38,16 +42,18 @@ class App():
             self.data_attributes = self.data.columns
             self.file_is_uploaded = True
 
+            self.show_data_dataframe()
+            self.get_data_key_column()
             # self.show_form()
 
     def show_data_dataframe(self):
         if self.file_is_uploaded:
             col1, col2 = st.columns(2)
             col1.text("Data :")
-            col1.write(self.data)
+            col1.dataframe(self.data)
 
             col2.text("Data Attributes :")
-            col2.write(self.data_attributes)
+            col2.dataframe(self.data_attributes)
 
     def get_data_key_column(self):
         if self.file_is_uploaded:
@@ -97,6 +103,8 @@ class App():
 
             # Kurva Kaplan-Meier
             st.title("All Attributes")
+
+            st.text("Kurva Kaplan-Meier")
             self.kmf.fit(durations=self.data[self.data_key_columns["duration"]],
                          event_observed=self.data[self.data_key_columns["event_observed"]], label="All Attributes")
             plt.figure(figsize=(10, 6))
@@ -115,7 +123,20 @@ class App():
                          event_observed=self.data[self.data_key_columns["event_observed"]], label="All attributes")
             self.kmf.plot_cumulative_density()
 
-            st.text("Cummulative Density " + key)
+            st.text("Cummulative Density ")
+            st.pyplot(plt)
+
+            # Median Time to Event
+            plt.figure(figsize=(10, 6))
+            plt.title("Median Time to Event")
+            plt.xlabel("Waktu")
+            plt.ylabel("Conditional median time to event")
+            self.kmf.fit(durations=self.data[self.data_key_columns["duration"]],
+                         event_observed=self.data[self.data_key_columns["event_observed"]], label="All attributes")
+            plt.plot(self.kmf.conditional_time_to_event_,
+                     label="All attributes")
+
+            st.text("Median Time to Event ")
             st.pyplot(plt)
 
             # Median Survival Time
@@ -134,6 +155,7 @@ class App():
                 self.show_median_survival_function(key)
                 self.show_kurva_kaplan_meier(key)
                 self.show_density_cumulative(key)
+                self.show_conditional_time_event(key)
 
     def show_kurva_kaplan_meier(self, key):
 
@@ -171,11 +193,22 @@ class App():
         st.text("Cummulative Density " + key)
         st.pyplot(plt)
 
+    def show_conditional_time_event(self, key):
+        plt.figure(figsize=(10, 6))
+        plt.title("Median Time to Event")
+        plt.xlabel("Waktu")
+        plt.ylabel("Conditional median time to event")
+
+        for attributes, attributes_df in self.data.groupby(key):
+            self.kmf.fit(durations=attributes_df[self.data_key_columns["duration"]],
+                         event_observed=attributes_df[self.data_key_columns["event_observed"]], label=attributes)
+            plt.plot(self.kmf.conditional_time_to_event_, label=attributes)
+
+        st.text("Median Time to Event " + key)
+        st.pyplot(plt)
+
 
 app = App()
 app.init_app()
 app.get_data_excel()
-app.show_data_dataframe()
-app.get_data_key_column()
-# app.show_form()
 app.show_analisis()
