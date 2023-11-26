@@ -5,6 +5,7 @@ from lifelines import KaplanMeierFitter
 from lifelines import NelsonAalenFitter
 import matplotlib.pyplot as plt
 from lifelines.statistics import logrank_test
+from lifelines import CoxPHFitter
 from itertools import combinations
 
 
@@ -18,6 +19,7 @@ class App():
     file_is_uploaded = False
     kmf = KaplanMeierFitter()
     naf = NelsonAalenFitter()
+    cph = CoxPHFitter()
     data_key_columns = {
         "duration": None,
         "event_observed": None
@@ -159,6 +161,23 @@ class App():
 
             st.text("Survival Function :")
             st.write(self.kmf.survival_function_)
+
+            # Cox Proportional Hazard
+            data_cox = self.data.select_dtypes(include=['int64', 'float64'])
+            data_cox[self.data_key_columns["event_observed"]
+                     ] = self.data[self.data_key_columns["event_observed"]]
+
+            self.cph.fit(data_cox, duration_col=self.data_key_columns["duration"],
+                         event_col=self.data_key_columns["event_observed"])
+            st.text("Cox Proportional Hazard Summary")
+            st.write(self.cph.summary)
+
+            # Cox Proportional Hazard Plot
+            plt.figure(figsize=(10, 6))
+            plt.title("Cox Proportional Hazard")
+            self.cph.plot()
+            st.text("Cox Proportional Hazard Plot")
+            st.pyplot(plt)
 
             # Per Column Uniqeu value
             for key in self.data_attributes:
