@@ -15,7 +15,7 @@ class App():
     submitted_form_data = False
     file_is_uploaded = False
     kmf = KaplanMeierFitter()
-    naaf = NelsonAalenFitter()
+    naf = NelsonAalenFitter()
     data_key_columns = {
         "duration": None,
         "event_observed": None
@@ -116,9 +116,9 @@ class App():
 
             # Cumulative Density
             plt.figure(figsize=(10, 6))
-            plt.title("Cummulative Density")
+            plt.title("Cumulative Density")
             plt.xlabel("Waktu")
-            plt.ylabel("Death Probability")
+            plt.ylabel("Death Cumulative Probability")
             self.kmf.fit(durations=self.data[self.data_key_columns["duration"]],
                          event_observed=self.data[self.data_key_columns["event_observed"]], label="All attributes")
             self.kmf.plot_cumulative_density()
@@ -139,6 +139,18 @@ class App():
             st.text("Median Time to Event ")
             st.pyplot(plt)
 
+            # Cumulative Hazard
+            plt.figure(figsize=(10, 6))
+            plt.title("Cumulative Hazard")
+            plt.xlabel("Waktu")
+            plt.ylabel("Deatch Cumulative Probability")
+            self.naf.fit(durations=self.data[self.data_key_columns["duration"]],
+                         event_observed=self.data[self.data_key_columns["event_observed"]], label="All attributes")
+            self.naf.plot_cumulative_hazard()
+
+            st.text("Cumulative Hazard")
+            st.pyplot(plt)
+
             # Median Survival Time
             st.text("Median Survival Time : " +
                     self.kmf.median_survival_time_.__str__())
@@ -156,6 +168,7 @@ class App():
                 self.show_kurva_kaplan_meier(key)
                 self.show_density_cumulative(key)
                 self.show_conditional_time_event(key)
+                self.show_cumulative_hazard(key)
 
     def show_kurva_kaplan_meier(self, key):
 
@@ -205,6 +218,20 @@ class App():
             plt.plot(self.kmf.conditional_time_to_event_, label=attributes)
 
         st.text("Median Time to Event " + key)
+        st.pyplot(plt)
+
+    def show_cumulative_hazard(self, key):
+
+        plt.figure(figsize=(10, 6))
+        plt.title("Cumulative Hazard")
+        plt.xlabel("Waktu")
+        plt.ylabel("Deatch Cumulative Probability")
+        for attributes, attributes_df in self.data.groupby(key):
+            self.naf.fit(durations=attributes_df[self.data_key_columns["duration"]],
+                         event_observed=attributes_df[self.data_key_columns["event_observed"]], label=attributes)
+            self.naf.plot_cumulative_hazard()
+
+        st.text("Cumulative Hazard " + key)
         st.pyplot(plt)
 
 
