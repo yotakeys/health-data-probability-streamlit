@@ -1,6 +1,8 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+from lifelines import KaplanMeierFitter
+import matplotlib.pyplot as plt
 
 
 class App():
@@ -8,6 +10,8 @@ class App():
     data = pd.DataFrame()
     data_attributes = list()
     data_form = dict()
+    submitted = False
+    kmf = KaplanMeierFitter()
 
     def init_app(self):
         st.title("Analisis")
@@ -48,9 +52,9 @@ class App():
                     self.data_form[attr] = st.selectbox(
                         attr, self.data[attr].unique())
 
-            submitted = st.form_submit_button("Submit")
+            self.submitted = st.form_submit_button("Submit")
 
-            if (submitted):
+            if (self.submitted):
                 self.show_data_input()
 
     def show_data_input(self):
@@ -59,7 +63,27 @@ class App():
         for key, value in self.data_form.items():
             st.write(key, ":", value)
 
+    def show_analisis(self):
+        for key, _ in self.data_form.items():
+            self.show_kurva_kaplan_meier(key)
+
+    def show_kurva_kaplan_meier(self, key):
+        plt.figure(figsize=(10, 6))
+        plt.title("Kurva Kaplan-Meier")
+        plt.xlabel("Waktu (Bulan)")
+        plt.ylabel("Survival Probability")
+        for attributes, attributes_df in self.data.groupby(key):
+            self.kmf.fit(durations=attributes_df["Survival_time"],
+                         event_observed=attributes_df['Status'], label=attributes)
+            self.kmf.plot_survival_function()
+            if self.submitted and self.data_form[key] == attributes:
+                self.show_survival(key)
+
+        st.text("Kurva Kaplan-Meier " + key)
+        st.pyplot(plt)
+
 
 app = App()
 app.init_app()
 app.get_data_excel()
+app.show_analisis()
