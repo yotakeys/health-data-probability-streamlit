@@ -4,6 +4,8 @@ import pandas as pd
 from lifelines import KaplanMeierFitter
 from lifelines import NelsonAalenFitter
 import matplotlib.pyplot as plt
+from lifelines.statistics import logrank_test
+from itertools import combinations
 
 
 class App():
@@ -169,6 +171,7 @@ class App():
                 self.show_density_cumulative(key)
                 self.show_conditional_time_event(key)
                 self.show_cumulative_hazard(key)
+                self.show_logrank_test(key)
 
     def show_kurva_kaplan_meier(self, key):
 
@@ -233,6 +236,17 @@ class App():
 
         st.text("Cumulative Hazard " + key)
         st.pyplot(plt)
+
+    def show_logrank_test(self, key):
+        combination_value = list(combinations(self.data[key].unique(), 2))
+        for combi in combination_value:
+            st.text("Logrank Test " + combi[0] + " and " + combi[1])
+            st.write(logrank_test(self.data[self.data[key] == combi[0]][self.data_key_columns["duration"]],
+                                  self.data[self.data[key] == combi[1]
+                                            ][self.data_key_columns["duration"]],
+                                  self.data[self.data[key] == combi[0]
+                                            ][self.data_key_columns["event_observed"]],
+                                  self.data[self.data[key] == combi[1]][self.data_key_columns["event_observed"]]))
 
 
 app = App()
