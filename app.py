@@ -34,6 +34,11 @@ class App():
         if uploaded_file is not None and uploaded_file.name.endswith(".xlsx"):
 
             self.data = pd.read_excel(uploaded_file)
+
+            self.data = self.data.dropna()
+            single_unique_cols = self.data.columns[self.data.nunique() == 1]
+            self.data = self.data.drop(single_unique_cols, axis=1)
+
             self.data_attributes = self.data.columns
             self.file_is_uploaded = True
 
@@ -43,6 +48,11 @@ class App():
 
         elif uploaded_file is not None and uploaded_file.name.endswith(".csv"):
             self.data = pd.read_csv(uploaded_file)
+
+            self.data = self.data.dropna()
+            single_unique_cols = self.data.columns[self.data.nunique() == 1]
+            self.data = self.data.drop(single_unique_cols, axis=1)
+
             self.data_attributes = self.data.columns
             self.file_is_uploaded = True
 
@@ -105,6 +115,8 @@ class App():
     def show_analisis(self):
         if self.submitted_key_column:
 
+            self.data[self.data_key_columns["event_observed"]
+                      ] = self.data[self.data_key_columns["event_observed"]].astype('object')
             # Kurva Kaplan-Meier
             st.title("All Attributes")
 
@@ -184,6 +196,9 @@ class App():
                 if key == self.data_key_columns["duration"] or key == self.data_key_columns["event_observed"]:
                     continue
 
+                if self.data[key].dtype == 'int64' or self.data[key].dtype == 'float64':
+                    continue
+
                 st.title(key)
                 self.show_median_survival_function(key)
                 self.show_kurva_kaplan_meier(key)
@@ -211,7 +226,7 @@ class App():
         for attributes, attributes_df in self.data.groupby(key):
             self.kmf.fit(durations=attributes_df[self.data_key_columns["duration"]],
                          event_observed=attributes_df[self.data_key_columns["event_observed"]], label=attributes)
-            st.text("Median Survival Time : " + key + " " + attributes +
+            st.text("Median Survival Time : " + key + " " + str(attributes) +
                     " : " + self.kmf.median_survival_time_.__str__())
 
     def show_density_cumulative(self, key):
