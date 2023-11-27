@@ -30,7 +30,7 @@ class App():
         st.sidebar.title("Input Your Data")
 
     def get_data_excel(self):
-        uploaded_file = st.sidebar.file_uploader("Choose a excel file")
+        uploaded_file = st.sidebar.file_uploader("Choose a excel/csv file")
         if uploaded_file is not None and uploaded_file.name.endswith(".xlsx"):
 
             self.data = pd.read_excel(uploaded_file)
